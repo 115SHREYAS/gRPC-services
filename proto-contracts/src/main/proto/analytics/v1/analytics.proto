@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package demo.analytics.v1;
+
+option java_multiple_files = true;
+option java_package = "com.example.grpc.contract.analytics.v1";
+option java_outer_classname = "AnalyticsProto";
+
+message LifecycleEvent {
+  string correlation_id = 1;
+  string order_id = 2;
+  string stage = 3;
+  string details = 4;
+}
+
+message LifecycleAck {
+  string ingestion_id = 1;
+  int32 accepted_count = 2;
+  string summary = 3;
+}
+
+message RecommendationSignal {
+  string correlation_id = 1;
+  string order_id = 2;
+  string signal_type = 3;
+  string value = 4;
+}
+
+message RecommendationAdvice {
+  string order_id = 1;
+  string advice_code = 2;
+  string message = 3;
+  string severity = 4;
+}
+
+service AnalyticsService {
+  rpc IngestLifecycle(stream LifecycleEvent) returns (LifecycleAck);
+  rpc LiveRecommendations(stream RecommendationSignal) returns (stream RecommendationAdvice);
+}

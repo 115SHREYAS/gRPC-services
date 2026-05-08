@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package demo.pricing.v1;
+
+option java_multiple_files = true;
+option java_package = "com.example.grpc.contract.pricing.v1";
+option java_outer_classname = "PricingProto";
+
+import "common/v1/common.proto";
+
+message PricingRequest {
+  string correlation_id = 1;
+  demo.common.v1.Customer customer = 2;
+  repeated demo.common.v1.CartItem items = 3;
+  string currency = 4;
+}
+
+message LineQuote {
+  string sku = 1;
+  int32 quantity = 2;
+  demo.common.v1.Money unit_price = 3;
+  demo.common.v1.Money line_total = 4;
+  string applied_rule = 5;
+}
+
+message PricingResponse {
+  reserved 6;
+  reserved "legacy_discount_code";
+
+  string quote_id = 1;
+  repeated LineQuote lines = 2;
+  demo.common.v1.Money subtotal = 3;
+  demo.common.v1.Money discount = 4;
+  demo.common.v1.Money final_total = 5;
+  string pricing_strategy = 7;
+}
+
+service PricingService {
+  rpc PriceCart(PricingRequest) returns (PricingResponse);
+}

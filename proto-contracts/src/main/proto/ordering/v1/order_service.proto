@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package demo.ordering.v1;
+
+option java_multiple_files = true;
+option java_package = "com.example.grpc.contract.ordering.v1";
+option java_outer_classname = "OrderingProto";
+
+import "common/v1/common.proto";
+import "pricing/v1/pricing.proto";
+import "inventory/v1/inventory.proto";
+
+enum OrderState {
+  ORDER_STATE_UNSPECIFIED = 0;
+  ORDER_STATE_QUOTED = 1;
+  ORDER_STATE_ACCEPTED = 2;
+  ORDER_STATE_RESERVED = 3;
+  ORDER_STATE_COMPLETED = 4;
+  ORDER_STATE_REJECTED = 5;
+}
+
+message QuoteRequest {
+  string correlation_id = 1;
+  demo.common.v1.Customer customer = 2;
+  repeated demo.common.v1.CartItem items = 3;
+  string currency = 4;
+}
+
+message QuoteResponse {
+  string quote_id = 1;
+  demo.pricing.v1.PricingResponse pricing = 2;
+  repeated demo.inventory.v1.WarehouseAvailabilitySnapshot availability = 3;
+  repeated string recommendation_messages = 4;
+}
+
+message PlaceOrderRequest {
+  string correlation_id = 1;
+  demo.common.v1.Customer customer = 2;
+  repeated demo.common.v1.CartItem items = 3;
+  demo.common.v1.Address shipping_address = 4;
+  string currency = 5;
+}
+
+message PlaceOrderResponse {
+  string order_id = 1;
+  string quote_id = 2;
+  string reservation_id = 3;
+  OrderState state = 4;
+  demo.pricing.v1.PricingResponse pricing = 5;
+  demo.inventory.v1.InventoryReservationResponse reservation = 6;
+  repeated string analytics_notes = 7;
+}
+
+message OrderJourneyRequest {
+  string correlation_id = 1;
+  string order_id = 2;
+}
+
+message OrderJourneyEvent {
+  string order_id = 1;
+  string stage = 2;
+  string message = 3;
+  int32 sequence = 4;
+}
+
+service OrderCommandService {
+  rpc CreateQuote(QuoteRequest) returns (QuoteResponse);
+  rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
+  rpc WatchOrderJourney(OrderJourneyRequest) returns (stream OrderJourneyEvent);
+}
