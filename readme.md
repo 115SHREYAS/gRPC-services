@@ -93,7 +93,7 @@ Use the repo scripts to start and stop all services:
 .\stop-all.ps1
 ```
 
-`start-all.ps1` builds and starts each service in its own PowerShell window. `stop-all.ps1` stops Java processes whose command line contains this repo path and the service names.
+`start-all.ps1` builds and starts each service in its own PowerShell window. `stop-all.ps1` stops Java processes that include this repo path and the service names in their command line.
 
 ### Example REST Calls
 

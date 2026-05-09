@@ -11,7 +11,9 @@ $services = @(
     @{ Name = "api-gateway" }
 )
 
+$gracefulStopWaitMs = 500
 $repoPattern = [Regex]::Escape($repoRoot)
+$separatorPattern = "[\\\\/]"
 $javaProcesses = Get-CimInstance Win32_Process | Where-Object {
     $_.Name -match '^java(\.exe)?$' -and $_.CommandLine
 }
@@ -23,7 +25,7 @@ $notRunning = @()
 foreach ($service in $services) {
     $name = $service.Name
     $servicePattern = [Regex]::Escape($name)
-    $serviceRegex = "(?i)$repoPattern[\\\\/]+$servicePattern([\\\\/]|\\.jar|\\s|$)"
+    $serviceRegex = "(?i)$repoPattern$separatorPattern+$servicePattern($separatorPattern|\\.jar|\\s|$)"
     $matches = $javaProcesses | Where-Object {
         $_.CommandLine -match $serviceRegex
     }
@@ -42,7 +44,7 @@ foreach ($service in $services) {
     foreach ($pid in $pids) {
         try {
             Stop-Process -Id $pid -ErrorAction Stop
-            Start-Sleep -Milliseconds 500
+            Start-Sleep -Milliseconds $gracefulStopWaitMs
             if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
                 Stop-Process -Id $pid -Force -ErrorAction Stop
             }
