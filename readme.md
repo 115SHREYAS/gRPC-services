@@ -95,6 +95,7 @@ Use the repo scripts to start and stop all services:
 
 `start-all.ps1` builds and starts each service in its own PowerShell window. `stop-all.ps1` stops Java processes whose command lines contain this repository path and matching service names.
 These scripts are intended for PowerShell on Windows; stopping processes may require sufficient permissions, and `stop-all.ps1` falls back to a force stop if a graceful shutdown does not finish within the timeout.
+`stop-all.ps1` only stops processes; it does not clean build outputs.
 You can override the stop timeout with `.\stop-all.ps1 -StopTimeoutSeconds 10`.
 
 ### Example REST Calls

@@ -54,13 +54,23 @@ foreach ($service in $services) {
             try {
                 Wait-Process -Id $pid -Timeout $StopTimeoutSeconds -ErrorAction Stop
             } catch {
-                $timedOut = $true
+                if ($_.FullyQualifiedErrorId -eq "WaitProcessTimeout") {
+                    $timedOut = $true
+                } else {
+                    throw
+                }
             }
             if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
                 if ($timedOut) {
                     Write-Host ("Graceful stop timed out for {0} (PID {1}); forcing stop." -f $name, $pid) -ForegroundColor Yellow
                 }
-                Stop-Process -Id $pid -Force -ErrorAction Stop
+                try {
+                    Stop-Process -Id $pid -Force -ErrorAction Stop
+                } catch {
+                    if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
+                        throw
+                    }
+                }
             }
         } catch {
             $failedPids += $pid
