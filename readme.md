@@ -84,6 +84,17 @@ Start each service in a separate terminal:
 .\mvnw.cmd -pl api-gateway spring-boot:run
 ```
 
+### Convenience scripts (PowerShell)
+
+Use the repo scripts to start and stop all services:
+
+```powershell
+.\start-all.ps1
+.\stop-all.ps1
+```
+
+`start-all.ps1` builds and starts each service in its own PowerShell window. `stop-all.ps1` stops Java processes whose command line contains this repo path and the service names.
+
 ### Example REST Calls
 
 Quote:
