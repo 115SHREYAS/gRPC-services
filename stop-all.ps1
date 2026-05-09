@@ -47,12 +47,12 @@ foreach ($service in $services) {
     $found += $name
 
     $failedPids = @()
-    foreach ($pid in $pids) {
+    foreach ($processId in $pids) {
         try {
-            Stop-Process -Id $pid -ErrorAction Stop
+            Stop-Process -Id $processId -ErrorAction Stop
             $timedOut = $false
             try {
-                Wait-Process -Id $pid -Timeout $StopTimeoutSeconds -ErrorAction Stop
+                Wait-Process -Id $processId -Timeout $StopTimeoutSeconds -ErrorAction Stop
             } catch {
                 if ($_.FullyQualifiedErrorId -eq "WaitProcessTimeout") {
                     $timedOut = $true
@@ -60,21 +60,21 @@ foreach ($service in $services) {
                     throw
                 }
             }
-            if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
+            if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
                 if ($timedOut) {
-                    Write-Host ("Graceful stop timed out for {0} (PID {1}); forcing stop." -f $name, $pid) -ForegroundColor Yellow
+                    Write-Host ("Graceful stop timed out for {0} (PID {1}); forcing stop." -f $name, $processId) -ForegroundColor Yellow
                 }
                 try {
-                    Stop-Process -Id $pid -Force -ErrorAction Stop
+                    Stop-Process -Id $processId -Force -ErrorAction Stop
                 } catch {
-                    if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
+                    if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
                         throw
                     }
                 }
             }
         } catch {
-            $failedPids += $pid
-            Write-Host ("Failed to stop {0} (PID {1}): {2}" -f $name, $pid, $_.Exception.Message) -ForegroundColor Red
+            $failedPids += $processId
+            Write-Host ("Failed to stop {0} (PID {1}): {2}" -f $name, $processId, $_.Exception.Message) -ForegroundColor Red
         }
     }
 
