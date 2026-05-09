@@ -13,7 +13,7 @@ $services = @(
 
 $gracefulStopWaitSeconds = 5
 $repoPattern = [Regex]::Escape($repoRoot)
-$separatorPattern = "[\\\\/]"
+$separatorPattern = "[\\/]"
 $javaProcesses = Get-CimInstance Win32_Process | Where-Object {
     $_.Name -match '^java(\.exe)?$' -and $_.CommandLine
 }
@@ -26,7 +26,7 @@ foreach ($service in $services) {
     $name = $service.Name
     $servicePattern = [Regex]::Escape($name)
     $servicePathPrefix = "$repoPattern$separatorPattern+$servicePattern"
-    $serviceBoundary = "($separatorPattern|\\.jar|\\s|$)"
+    $serviceBoundary = "($separatorPattern|\.jar|\s|$)"
     # Matches repoRoot/service-name/ or repoRoot/service-name.jar or repoRoot/service-name<space/end>
     $serviceRegex = "(?i)$servicePathPrefix$serviceBoundary"
     $matches = $javaProcesses | Where-Object {
