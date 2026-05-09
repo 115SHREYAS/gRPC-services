@@ -1,3 +1,7 @@
+param(
+    [int]$GracefulStopWaitSeconds = 5
+)
+
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -11,7 +15,6 @@ $services = @(
     @{ Name = "api-gateway" }
 )
 
-$gracefulStopWaitSeconds = 5
 $repoPattern = [Regex]::Escape($repoRoot)
 $separatorPattern = "[\\/]"
 $javaProcesses = Get-CimInstance Win32_Process | Where-Object {
@@ -47,7 +50,7 @@ foreach ($service in $services) {
     foreach ($pid in $pids) {
         try {
             Stop-Process -Id $pid -ErrorAction Stop
-            Wait-Process -Id $pid -Timeout $gracefulStopWaitSeconds -ErrorAction SilentlyContinue
+            Wait-Process -Id $pid -Timeout $GracefulStopWaitSeconds -ErrorAction SilentlyContinue
             if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
                 Stop-Process -Id $pid -Force -ErrorAction Stop
             }
