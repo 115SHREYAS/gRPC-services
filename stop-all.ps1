@@ -11,6 +11,7 @@ $services = @(
     @{ Name = "api-gateway" }
 )
 
+$repoPattern = [Regex]::Escape($repoRoot)
 $javaProcesses = Get-CimInstance Win32_Process | Where-Object {
     $_.Name -match '^java(\.exe)?$' -and $_.CommandLine
 }
@@ -21,8 +22,10 @@ $notRunning = @()
 
 foreach ($service in $services) {
     $name = $service.Name
+    $servicePattern = [Regex]::Escape($name)
+    $serviceRegex = "(?i)$repoPattern[\\\\/]+$servicePattern([\\\\/]|\\.jar|\\s|$)"
     $matches = $javaProcesses | Where-Object {
-        $_.CommandLine -ilike "*$repoRoot*" -and $_.CommandLine -ilike "*$name*"
+        $_.CommandLine -match $serviceRegex
     }
 
     if (-not $matches) {
@@ -39,6 +42,10 @@ foreach ($service in $services) {
     foreach ($pid in $pids) {
         try {
             Stop-Process -Id $pid -ErrorAction Stop
+            Start-Sleep -Milliseconds 500
+            if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
+                Stop-Process -Id $pid -Force -ErrorAction Stop
+            }
         } catch {
             $failed = $true
             Write-Host ("Failed to stop {0} (PID {1}): {2}" -f $name, $pid, $_.Exception.Message) -ForegroundColor Red
