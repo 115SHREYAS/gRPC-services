@@ -4,6 +4,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Test-ProcessExists([int]$processId) {
+    return [bool](Get-Process -Id $processId -ErrorAction SilentlyContinue)
+}
+
+function Is-ProcessNotFoundError($err) {
+    if (-not $err) {
+        return $false
+    }
+    if ($err.FullyQualifiedErrorId -match "ProcessNotFound|NoProcessFoundForGivenId") {
+        return $true
+    }
+    $message = $err.Exception.Message
+    return $message -match "Cannot find a process with the process identifier"
+}
+
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $repoRoot
 
@@ -48,6 +63,9 @@ foreach ($service in $services) {
 
     $failedPids = @()
     foreach ($processId in $pids) {
+        if (-not (Test-ProcessExists $processId)) {
+            continue
+        }
         try {
             Stop-Process -Id $processId -ErrorAction Stop
             $timedOut = $false
@@ -56,6 +74,8 @@ foreach ($service in $services) {
             } catch {
                 if ($_.FullyQualifiedErrorId -eq "WaitProcessTimeout") {
                     $timedOut = $true
+                } elseif (Is-ProcessNotFoundError $_) {
+                    continue
                 } else {
                     throw
                 }
@@ -67,12 +87,18 @@ foreach ($service in $services) {
                 try {
                     Stop-Process -Id $processId -Force -ErrorAction Stop
                 } catch {
+                    if (Is-ProcessNotFoundError $_) {
+                        continue
+                    }
                     if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
                         throw
                     }
                 }
             }
         } catch {
+            if (Is-ProcessNotFoundError $_) {
+                continue
+            }
             $failedPids += $processId
             Write-Host ("Failed to stop {0} (PID {1}): {2}" -f $name, $processId, $_.Exception.Message) -ForegroundColor Red
         }
