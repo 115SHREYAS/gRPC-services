@@ -11,7 +11,7 @@ $services = @(
     @{ Name = "api-gateway" }
 )
 
-$gracefulStopWaitMs = 500
+$gracefulStopWaitMs = 5000
 $repoPattern = [Regex]::Escape($repoRoot)
 $separatorPattern = "[\\\\/]"
 $javaProcesses = Get-CimInstance Win32_Process | Where-Object {
@@ -25,7 +25,10 @@ $notRunning = @()
 foreach ($service in $services) {
     $name = $service.Name
     $servicePattern = [Regex]::Escape($name)
-    $serviceRegex = "(?i)$repoPattern$separatorPattern+$servicePattern($separatorPattern|\\.jar|\\s|$)"
+    $servicePathPrefix = "$repoPattern$separatorPattern+$servicePattern"
+    $serviceBoundary = "($separatorPattern|\\.jar|\\s|$)"
+    # Matches repoRoot/service-name/ or repoRoot/service-name.jar or repoRoot/service-name<space/end>
+    $serviceRegex = "(?i)$servicePathPrefix$serviceBoundary"
     $matches = $javaProcesses | Where-Object {
         $_.CommandLine -match $serviceRegex
     }
@@ -62,7 +65,7 @@ foreach ($service in $services) {
     }
 }
 
-function Format-Names([string[]]$names) {
+function Format-ServiceList([string[]]$names) {
     if (-not $names -or $names.Count -eq 0) {
         return "None"
     }
@@ -71,6 +74,6 @@ function Format-Names([string[]]$names) {
 
 Write-Host ""
 Write-Host "Summary" -ForegroundColor Cyan
-Write-Host ("Found: {0}" -f (Format-Names $found))
-Write-Host ("Stopped: {0}" -f (Format-Names $stopped))
-Write-Host ("Not running: {0}" -f (Format-Names $notRunning))
+Write-Host ("Found: {0}" -f (Format-ServiceList $found))
+Write-Host ("Stopped: {0}" -f (Format-ServiceList $stopped))
+Write-Host ("Not running: {0}" -f (Format-ServiceList $notRunning))
