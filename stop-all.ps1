@@ -11,7 +11,7 @@ $services = @(
     @{ Name = "api-gateway" }
 )
 
-$gracefulStopWaitMs = 5000
+$gracefulStopWaitSeconds = 5
 $repoPattern = [Regex]::Escape($repoRoot)
 $separatorPattern = "[\\\\/]"
 $javaProcesses = Get-CimInstance Win32_Process | Where-Object {
@@ -43,25 +43,25 @@ foreach ($service in $services) {
     Write-Host ("Found {0} (PID: {1})" -f $name, ($pids -join ", ")) -ForegroundColor Cyan
     $found += $name
 
-    $failed = $false
+    $failedPids = @()
     foreach ($pid in $pids) {
         try {
             Stop-Process -Id $pid -ErrorAction Stop
-            Start-Sleep -Milliseconds $gracefulStopWaitMs
+            Wait-Process -Id $pid -Timeout $gracefulStopWaitSeconds -ErrorAction SilentlyContinue
             if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
                 Stop-Process -Id $pid -Force -ErrorAction Stop
             }
         } catch {
-            $failed = $true
+            $failedPids += $pid
             Write-Host ("Failed to stop {0} (PID {1}): {2}" -f $name, $pid, $_.Exception.Message) -ForegroundColor Red
         }
     }
 
-    if (-not $failed) {
+    if ($failedPids.Count -eq 0) {
         Write-Host ("Stopped {0}" -f $name) -ForegroundColor Green
         $stopped += $name
     } else {
-        Write-Host ("Stop incomplete for {0}" -f $name) -ForegroundColor Yellow
+        Write-Host ("Stop incomplete for {0}. Failed PIDs: {1}" -f $name, ($failedPids -join ", ")) -ForegroundColor Yellow
     }
 }
 
