@@ -90,10 +90,12 @@ Use the repo scripts to start and stop all services:
 
 ```powershell
 .\start-all.ps1
+.\health-check.ps1
 .\stop-all.ps1
 ```
 
 `start-all.ps1` builds and starts each service in its own PowerShell window. `stop-all.ps1` stops Java processes whose command lines contain this repository path and matching service names.
+`health-check.ps1` calls each service's `/actuator/health` endpoint and prints a quick UP or DOWN summary before you begin testing.
 These scripts are intended for PowerShell on Windows; stopping processes may require sufficient permissions, and `stop-all.ps1` falls back to a force stop if a graceful shutdown does not finish within the timeout.
 `stop-all.ps1` only stops processes; it does not clean build outputs.
 You can override the stop timeout with `.\stop-all.ps1 -StopTimeoutSeconds 10`.
